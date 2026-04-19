@@ -178,13 +178,18 @@ def generate():
 
 # ===================== INIT =====================
 
-# Don't load model at startup - too slow for serverless
+# Load model at startup to avoid memory issues during requests
+print("Initializing model...")
 model_runner = None
+try:
+    init_model()
+except Exception as e:
+    print(f"Startup init error: {e}")
 
 def init_model():
     global model_runner
     if model_runner:
-        return  # Already loaded
+        return
 
     model_url = os.environ.get("MODEL_URL")
 
@@ -193,8 +198,14 @@ def init_model():
         print(f"Checking for model at: {path_cand}")
         if model_path.exists():
             try:
+                file_size = model_path.stat().st_size
+                print(f"Model file size: {file_size / 1024 / 1024:.1f} MB")
                 model_runner = ModelRunner(str(model_path))
                 print(f"Model loaded from {path_cand}!")
+                return
+            except MemoryError:
+                print("Out of memory - staying in demo mode")
+                model_runner = None
                 return
             except Exception as e:
                 print(f"Load error from {path_cand}: {e}")
