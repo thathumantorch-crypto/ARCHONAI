@@ -17,9 +17,9 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-MODEL_PATH = os.environ.get("MODEL_PATH", "archon_model.pt")
+MODEL_PATH = os.environ.get("MODEL_PATH", "/app/inference/archon_model.pt")
 DEVICE = torch.device("cpu")
-DEMO_MODE = os.environ.get("DEMO_MODE", "true").lower() == "true"
+DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
 DEMO_RESPONSES = [
     "I am ARCHON, a semi-aware AI assistant. I can help answer questions from my knowledge base.",

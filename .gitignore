@@ -3,10 +3,10 @@ dist/
 *.log
 .env
 .DS_Store
-*.pt
 *.onnx
 __pycache__/
 .pyc
+inference/*.pt
 
 # wrangler files
 .wrangler
