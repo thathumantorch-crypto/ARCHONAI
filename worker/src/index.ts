@@ -3,6 +3,7 @@ import { callLlm, type ChatMessage } from "./llm";
 import { retrieveMarkdownContext } from "./rag";
 import { retrieveMemories, saveMemory } from "./memory";
 import { webSearchIfNeeded } from "./web_search";
+import { processCommand } from "./commands";
 
 const HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -208,6 +209,14 @@ export default {
       [...messages].reverse().find(m => m.role === "user")?.content ?? messages[messages.length - 1].content;
     const userKey = `user:${userId}`;
 
+    // Check for system commands
+    const commandResult = await processCommand(latestUserMessage, userId, env);
+    if (commandResult.isCommand) {
+      return new Response(JSON.stringify({ reply: commandResult.response }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
     // User profile
     let profile: UserProfile = { userId, createdAt: new Date().toISOString(), lastSeenAt: "", preferences: {} };
     const storedProfile = await env.ARCHON_PROFILE.get(userKey, "json") as UserProfile | null;
@@ -243,10 +252,10 @@ ${webResults || "(none)"}
       ...messages
     ];
 
-    const reply = await callLlm(archonMessages, env);
-    await saveMemory(userKey, latestUserMessage, reply, env);
+    const reply = await callLlm(archonMessages, env).catch(err => `ARCHON error: ${err.message}`);
+    await saveMemory(userKey, latestUserMessage, reply, env).catch(() => {});
 
-    return new Response(JSON.stringify({ reply }), {
+    return new Response(JSON.stringify({ reply: String(reply) }), {
       headers: { "Content-Type": "application/json" }
     });
   }

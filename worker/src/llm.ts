@@ -8,7 +8,7 @@ export interface ChatMessage {
 export async function callLlm(messages: ChatMessage[], env: Env): Promise<string> {
   const inferenceUrl = env.INFERENCE_URL ?? "";
   if (!inferenceUrl) {
-    return "ARCHON configuration error: No inference endpoint configured. Env keys: " + JSON.stringify(Object.keys(env));
+    return "ARCHON: No inference endpoint configured.";
   }
 
   const conversation = messages
@@ -29,14 +29,24 @@ export async function callLlm(messages: ChatMessage[], env: Env): Promise<string
       })
     });
 
+    const text = await res.text();
+    
     if (!res.ok) {
-      return `ARCHON inference error: ${res.status} ${res.statusText}`;
+      return `ARCHON error: ${res.status} ${res.statusText} - ${text.substring(0, 100)}`;
     }
-
-    const data: any = await res.json();
-    return data.output || "ARCHON: (no response generated)";
+    
+    if (!text || text.trim() === "") {
+      return "ARCHON: Empty response from inference.";
+    }
+    
+    try {
+      const data = JSON.parse(text);
+      return data.output || "ARCHON: No response generated.";
+    } catch (parseErr) {
+      return `ARCHON parse error: ${text.substring(0, 100)}`;
+    }
   } catch (err) {
-    return `ARCHON inference failed: ${err}`;
+    return `ARCHON connection failed: ${err}`;
   }
 }
 
