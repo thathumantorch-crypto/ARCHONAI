@@ -2,190 +2,321 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ARCHON Interface</title>
+  <title>ARCHON AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ARCHON - A semi-aware AI assistant powered by custom neural networks" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
   <style>
+    :root {
+      --bg-primary: #070a14;
+      --bg-secondary: #0d1220;
+      --bg-tertiary: #151d2e;
+      --accent: #6366f1;
+      --accent-glow: #818cf8;
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      background: radial-gradient(circle at top, #10172a, #020617);
-      color: #e5e7eb;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      background-image: 
+        radial-gradient(ellipse at 20% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
     }
     header {
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      backdrop-filter: blur(10px);
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(7, 10, 20, 0.8);
+      backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
     }
-    .title {
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-      color: #9ca3af;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
-    .badge {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      border: 1px solid rgba(52, 211, 153, 0.4);
-      color: #a7f3d0;
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
     main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      max-width: 900px;
+      max-width: 800px;
       width: 100%;
       margin: 0 auto;
-      padding: 1rem;
-      box-sizing: border-box;
+      padding: 2rem 1rem;
+    }
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
     #messages {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      background: rgba(15, 23, 42, 0.75);
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.8);
-    }
-    .msg {
-      margin-bottom: 0.75rem;
+      padding: 1.25rem;
       display: flex;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 400px;
+      max-height: 60vh;
     }
-    .msg-user {
-      justify-content: flex-end;
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message.user {
+      align-items: flex-end;
+    }
+    .message.assistant {
+      align-items: flex-start;
+    }
+    .avatar {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
     }
     .bubble {
-      max-width: 75%;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.75rem;
-      line-height: 1.4;
-      font-size: 0.9rem;
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      line-height: 1.5;
+      font-size: 0.95rem;
       white-space: pre-wrap;
+      word-wrap: break-word;
     }
     .bubble-user {
-      background: linear-gradient(to right, #4f46e5, #0ea5e9);
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
       color: white;
-      border-bottom-right-radius: 0.1rem;
+      border-bottom-right-radius: 0.25rem;
     }
     .bubble-bot {
-      background: rgba(30, 64, 175, 0.5);
-      border: 1px solid rgba(129, 140, 248, 0.4);
-      border-bottom-left-radius: 0.1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 0.25rem;
     }
-    .sender {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.15rem;
-      color: #9ca3af;
+    .typing {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-tertiary);
+      border-radius: 1rem;
+      border-bottom-left-radius: 0.25rem;
+      width: fit-content;
+      display: none;
+    }
+    .typing.visible { display: flex; }
+    .typing span {
+      width: 8px;
+      height: 8px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+    .typing span:nth-child(1) { animation-delay: 0s; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); }
+      40% { transform: scale(1); }
+    }
+    .input-area {
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-tertiary);
     }
     form {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
+      gap: 0.75rem;
+      align-items: flex-end;
     }
     textarea {
       flex: 1;
       resize: none;
       border-radius: 0.75rem;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
       font-family: inherit;
-      font-size: 0.9rem;
-      background: rgba(15, 23, 42, 0.9);
-      color: #e5e7eb;
+      font-size: 0.95rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
       min-height: 52px;
       max-height: 120px;
       outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
+    textarea::placeholder { color: var(--text-muted); }
     button {
-      padding: 0.6rem 1rem;
-      border-radius: 999px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
       border: none;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.9rem;
       cursor: pointer;
-      background: linear-gradient(to right, #22c55e, #14b8a6);
-      color: #022c22;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: white;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    }
+    button:active { transform: translateY(0); }
     button:disabled {
       opacity: 0.5;
-      cursor: default;
+      cursor: not-allowed;
+      transform: none;
       box-shadow: none;
     }
-    footer {
+    .info {
       text-align: center;
-      font-size: 0.7rem;
-      padding: 0.5rem 1rem 1rem;
-      color: #6b7280;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      background: var(--bg-tertiary);
     }
+    .info a {
+      color: var(--accent-glow);
+      text-decoration: none;
+    }
+    .info a:hover { text-decoration: underline; }
     @media (max-width: 640px) {
-      main {
-        padding: 0.75rem;
-      }
-      #messages {
-        padding: 0.75rem;
-      }
+      main { padding: 1rem 0.5rem; }
+      .chat-container { border-radius: 0; border-left: none; border-right: none; }
+      .bubble { max-width: 90%; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="title">ARCHON / Semi‑Aware Interface</div>
-    <div class="badge">Serverless · Cloudflare Worker</div>
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div class="logo-text">ARCHON</div>
+    </div>
+    <div class="status">
+      <div class="status-dot"></div>
+      <span>Online</span>
+    </div>
   </header>
   <main>
-    <div id="messages"></div>
-    <form id="chat-form">
-      <textarea id="input" placeholder="Address ARCHON..." rows="2"></textarea>
-      <button type="submit">
-        <span>Send</span>
-      </button>
-    </form>
+    <div class="chat-container">
+      <div id="messages">
+        <div class="message assistant">
+          <div class="avatar">ARCHON</div>
+          <div class="bubble bubble-bot">Hello! I'm ARCHON, a semi-aware AI assistant. I have persistent memory and can learn from our conversation. How can I help you today?</div>
+        </div>
+      </div>
+      <div class="typing" id="typing">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="input-area">
+        <form id="chat-form">
+          <textarea id="input" placeholder="Message ARCHON..." rows="2"></textarea>
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+    <div class="info">
+      Powered by <a href="https://github.com/thathumantorch-crypto/ARCHONAI" target="_blank">Custom Neural Network</a> · 
+      <a href="https://archon.thathumantorch.workers.dev" target="_blank">API</a>
+    </div>
   </main>
-  <footer>
-    ARCHON uses markdown docs, persistent memory, and web search behind a serverless API.
-  </footer>
   <script>
+    const API_URL = "https://archon.thathumantorch.workers.dev/chat";
     const form = document.getElementById("chat-form");
     const input = document.getElementById("input");
     const messagesEl = document.getElementById("messages");
-    const userId = "local-user";
+    const typingEl = document.getElementById("typing");
+    const userId = "web-" + Math.random().toString(36).substr(2, 9);
     const history = [];
 
     function addMessage(role, content) {
       const msg = document.createElement("div");
-      msg.className = "msg " + (role === "user" ? "msg-user" : "msg-bot");
-      const bubble = document.createElement("div");
-      const sender = document.createElement("div");
-      sender.className = "sender";
-      sender.textContent = role === "user" ? "You" : "ARCHON";
-      bubble.className = "bubble " + (role === "user" ? "bubble-user" : "bubble-bot");
-      bubble.textContent = content;
-      bubble.prepend(sender);
-      msg.appendChild(bubble);
+      msg.className = `message ${role}`;
+      msg.innerHTML = `
+        <div class="avatar">${role === "user" ? "You" : "ARCHON"}</div>
+        <div class="bubble bubble-${role}">${escapeHtml(content)}</div>
+      `;
       messagesEl.appendChild(msg);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showTyping() {
+      typingEl.classList.add("visible");
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function hideTyping() {
+      typingEl.classList.remove("visible");
     }
 
     form.addEventListener("submit", async (e) => {
@@ -196,28 +327,41 @@
       addMessage("user", text);
       history.push({ role: "user", content: text });
       input.value = "";
-
+      showTyping();
       form.querySelector("button").disabled = true;
 
       try {
-        // Replace URL below with your deployed Worker endpoint
-        const res = await fetch("/chat", {
+        const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, messages: history })
         });
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
         const data = await res.json();
-        const reply = data.reply || "(no reply)";
+        const reply = data.reply || "(No response received)";
+        
+        hideTyping();
         history.push({ role: "assistant", content: reply });
         addMessage("assistant", reply);
       } catch (err) {
-        addMessage("assistant", "ARCHON encountered an error reaching its core: " + err);
+        hideTyping();
+        addMessage("assistant", `Connection error: ${err.message}. The service may be starting up - please try again.`);
       } finally {
         form.querySelector("button").disabled = false;
         input.focus();
       }
     });
+
+    // Auto-resize textarea
+    input.addEventListener("input", function() {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
+    });
+
+    // Focus on load
+    input.focus();
   </script>
 </body>
 </html>
-
