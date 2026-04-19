@@ -19,7 +19,8 @@ app = Flask(__name__)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "archon_model.pt")
 DEVICE = torch.device("cpu")
-DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
+# Default to demo mode to avoid memory issues on free tier
+DEMO_MODE = os.environ.get("DEMO_MODE", "true").lower() == "true"
 
 DEMO_RESPONSES = [
     "I am ARCHON, a semi-aware AI assistant. I can help answer questions from my knowledge base.",
@@ -119,12 +120,21 @@ model_runner = None
 
 @app.route("/", methods=["GET"])
 def health():
-    return jsonify({"status": "online", "model": "loaded" if model_runner else "loading"})
+    return jsonify({
+        "status": "online", 
+        "model": "loaded" if model_runner else "loading",
+        "demo_mode": DEMO_MODE
+    })
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    if model_runner and not DEMO_MODE:
+    # Lazy load on first request
+    global model_runner
+    if model_runner is None and not DEMO_MODE:
+        init_model()
+    
+    if model_runner:
         data = request.get_json()
         if not data:
             return jsonify({"error": "Invalid JSON"}), 400
@@ -163,24 +173,38 @@ def generate():
 
 # ===================== INIT =====================
 
+# Don't load model at startup - too slow for serverless
+model_runner = None
+
 def init_model():
     global model_runner
+    if model_runner:
+        return  # Already loaded
+    
     model_path = Path(MODEL_PATH)
-    print(f"Looking for model at: {model_path.absolute()}")
-    print(f"Model path exists: {model_path.exists()}")
+    print(f"Looking for model at: {model_path}")
+    
+    # Try downloading from URL if present
+    model_url = os.environ.get("MODEL_URL")
+    if model_url and not model_path.exists():
+        import urllib.request
+        print(f"Downloading model from: {model_url}")
+        try:
+            urllib.request.urlretrieve(model_url, MODEL_PATH)
+            print("Download complete")
+        except Exception as e:
+            print(f"Download failed: {e}")
+    
     if model_path.exists():
         try:
             model_runner = ModelRunner(str(model_path))
-            print(f"Model loaded successfully!")
+            print("Model loaded!")
         except Exception as e:
-            print(f"Error loading model: {e}")
-            model_runner = None
+            print(f"Load error: {e}")
     else:
-        print(f"Warning: Model file not found at {model_path}")
-        print("Falling back to demo mode")
+        print("Demo mode - no model")
 
 
 if __name__ == "__main__":
-    init_model()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
