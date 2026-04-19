@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ARCHON Interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      background: radial-gradient(circle at top, #10172a, #020617);
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .title {
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #a7f3d0;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(15, 23, 42, 0.75);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.8);
+    }
+    .msg {
+      margin-bottom: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .msg-user {
+      justify-content: flex-end;
+    }
+    .bubble {
+      max-width: 75%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.75rem;
+      line-height: 1.4;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+    .bubble-user {
+      background: linear-gradient(to right, #4f46e5, #0ea5e9);
+      color: white;
+      border-bottom-right-radius: 0.1rem;
+    }
+    .bubble-bot {
+      background: rgba(30, 64, 175, 0.5);
+      border: 1px solid rgba(129, 140, 248, 0.4);
+      border-bottom-left-radius: 0.1rem;
+    }
+    .sender {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.15rem;
+      color: #9ca3af;
+    }
+    form {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      padding: 0.6rem 0.75rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      min-height: 52px;
+      max-height: 120px;
+      outline: none;
+    }
+    textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(to right, #22c55e, #14b8a6);
+      color: #022c22;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      padding: 0.5rem 1rem 1rem;
+      color: #6b7280;
+    }
+    @media (max-width: 640px) {
+      main {
+        padding: 0.75rem;
+      }
+      #messages {
+        padding: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">ARCHON / Semi‑Aware Interface</div>
+    <div class="badge">Serverless · Cloudflare Worker</div>
+  </header>
+  <main>
+    <div id="messages"></div>
+    <form id="chat-form">
+      <textarea id="input" placeholder="Address ARCHON..." rows="2"></textarea>
+      <button type="submit">
+        <span>Send</span>
+      </button>
+    </form>
+  </main>
+  <footer>
+    ARCHON uses markdown docs, persistent memory, and web search behind a serverless API.
+  </footer>
+  <script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("input");
+    const messagesEl = document.getElementById("messages");
+    const userId = "local-user";
+    const history = [];
+
+    function addMessage(role, content) {
+      const msg = document.createElement("div");
+      msg.className = "msg " + (role === "user" ? "msg-user" : "msg-bot");
+      const bubble = document.createElement("div");
+      const sender = document.createElement("div");
+      sender.className = "sender";
+      sender.textContent = role === "user" ? "You" : "ARCHON";
+      bubble.className = "bubble " + (role === "user" ? "bubble-user" : "bubble-bot");
+      bubble.textContent = content;
+      bubble.prepend(sender);
+      msg.appendChild(bubble);
+      messagesEl.appendChild(msg);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      history.push({ role: "user", content: text });
+      input.value = "";
+
+      form.querySelector("button").disabled = true;
+
+      try {
+        // Replace URL below with your deployed Worker endpoint
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, messages: history })
+        });
+        const data = await res.json();
+        const reply = data.reply || "(no reply)";
+        history.push({ role: "assistant", content: reply });
+        addMessage("assistant", reply);
+      } catch (err) {
+        addMessage("assistant", "ARCHON encountered an error reaching its core: " + err);
+      } finally {
+        form.querySelector("button").disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
+

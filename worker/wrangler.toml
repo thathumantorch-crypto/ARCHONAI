@@ -1,0 +1,16 @@
+name = "archon"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+INFERENCE_URL = ""
+VECTOR_DB_URL = ""
+
+[[kv_namespaces]]
+binding = "ARCHON_PROFILE"
+id = "archon_profile_kv"
+
+[[kv_namespaces]]
+binding = "ARCHON_MEMORY"
+id = "archon_memory_kv"
+
