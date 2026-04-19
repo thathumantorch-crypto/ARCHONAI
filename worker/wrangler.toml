@@ -3,8 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
 [vars]
-INFERENCE_URL = ""
 VECTOR_DB_URL = ""
+
+[secrets]
+# INFERENCE_URL - set via wrangler secret put
 
 [[kv_namespaces]]
 binding = "ARCHON_PROFILE"
