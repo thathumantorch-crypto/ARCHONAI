@@ -6,7 +6,6 @@ dist/
 *.onnx
 __pycache__/
 .pyc
-inference/*.pt
 
 # wrangler files
 .wrangler
