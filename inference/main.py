@@ -18,6 +18,11 @@ from pathlib import Path
 app = Flask(__name__)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "archon_model.pt")
+MODEL_PATHS = [
+    "archon_model.pt",
+    "/app/archon_model.pt",
+    "/opt/render/project/procache/archon_model.pt",
+]
 DEVICE = torch.device("cpu")
 # Default to demo mode while model loads
 DEMO_MODE = os.environ.get("DEMO_MODE", "true").lower() == "true"
@@ -180,29 +185,33 @@ def init_model():
     global model_runner
     if model_runner:
         return  # Already loaded
-    
-    model_path = Path(MODEL_PATH)
-    print(f"Looking for model at: {model_path}")
-    
-    # Try downloading from URL if present
+
     model_url = os.environ.get("MODEL_URL")
-    if model_url and not model_path.exists():
+
+    for path_cand in MODEL_PATHS:
+        model_path = Path(path_cand)
+        print(f"Checking for model at: {path_cand}")
+        if model_path.exists():
+            try:
+                model_runner = ModelRunner(str(model_path))
+                print(f"Model loaded from {path_cand}!")
+                return
+            except Exception as e:
+                print(f"Load error from {path_cand}: {e}")
+
+    if model_url:
         import urllib.request
         print(f"Downloading model from: {model_url}")
         try:
-            urllib.request.urlretrieve(model_url, MODEL_PATH)
-            print("Download complete")
+            urllib.request.urlretrieve(model_url, "archon_model.pt")
+            if Path("archon_model.pt").exists():
+                model_runner = ModelRunner("archon_model.pt")
+                print("Model loaded from URL!")
+                return
         except Exception as e:
             print(f"Download failed: {e}")
-    
-    if model_path.exists():
-        try:
-            model_runner = ModelRunner(str(model_path))
-            print("Model loaded!")
-        except Exception as e:
-            print(f"Load error: {e}")
-    else:
-        print("Demo mode - no model")
+
+    print("Demo mode - no model")
 
 
 if __name__ == "__main__":
