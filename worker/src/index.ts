@@ -1,7 +1,6 @@
 import type { Env } from "./types";
 import { callLlm, type ChatMessage } from "./llm";
 import { retrieveMarkdownContext } from "./rag";
-import { retrieveMemories, saveMemory } from "./memory";
 import { webSearchIfNeeded } from "./web_search";
 
 interface IncomingMessage {
@@ -15,7 +14,7 @@ interface ChatRequestBody {
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method !== "POST") {
       return new Response("ARCHON online. POST /chat with { userId, messages }.", { status: 200 });
     }
@@ -34,27 +33,8 @@ export default {
 
     const latestUserMessage =
       [...messages].reverse().find(m => m.role === "user")?.content ?? messages[messages.length - 1].content;
-    const userKey = `user:${userId}`;
 
-    // Load user profile from KV or create new
-    const rawProfile = await env.ARCHON_PROFILE.get(userKey, "json") as any | null;
-    const profile = rawProfile ?? {
-      userId,
-      createdAt: new Date().toISOString(),
-      preferences: {}
-    };
-
-    // Update lastSeen
-    profile.lastSeenAt = new Date().toISOString();
-    await env.ARCHON_PROFILE.put(userKey, JSON.stringify(profile));
-
-    // Retrieve internal markdown context (RAG)
     const markdownContext = await retrieveMarkdownContext(latestUserMessage, env);
-
-    // Retrieve long-term memory
-    const memoryContext = await retrieveMemories(userKey, latestUserMessage, env);
-
-    // Optionally search the web
     const webResults = await webSearchIfNeeded(latestUserMessage, env);
 
     const systemPrompt = `
@@ -66,14 +46,11 @@ Always explain your reasoning clearly and avoid hallucinating facts.
     `.trim();
 
     const contextualNotes = `
-[USER PROFILE]
-${JSON.stringify(profile, null, 2)}
+[USER ID]
+${userId}
 
 [RELEVANT INTERNAL DOCS]
 ${markdownContext || "(none)"}
-
-[RELEVANT LONG-TERM MEMORIES]
-${memoryContext || "(none)"},
 
 [WEB SEARCH RESULTS]
 ${webResults || "(not used this turn)"}
@@ -87,11 +64,8 @@ ${webResults || "(not used this turn)"}
 
     const reply = await callLlm(archonMessages, env);
 
-    ctx.waitUntil(saveMemory(userKey, latestUserMessage, reply, env));
-
     return new Response(JSON.stringify({ reply }), {
       headers: { "Content-Type": "application/json" }
     });
   }
 };
-

@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev --config worker/wrangler.toml",
-    "deploy": "wrangler deploy --config worker/wrangler.toml",
+    "deploy": "wrangler deploy",
     "ingest": "ts-node scripts/ingest_markdown.ts",
-    "test:api": "python test-local.py"
+    "test:api": "python test-local.py",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "cross-fetch": "^4.0.0"
@@ -15,6 +16,7 @@
     "@cloudflare/workers-types": "^4.20250129.0",
     "@types/node": "^25.6.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "wrangler": "^4.83.0"
   }
 }

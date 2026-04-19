@@ -6,9 +6,9 @@ export interface ChatMessage {
 }
 
 export async function callLlm(messages: ChatMessage[], env: Env): Promise<string> {
-  const inferenceUrl = env.INFERENCE_URL;
+  const inferenceUrl = env.INFERENCE_URL ?? "";
   if (!inferenceUrl) {
-    return "ARCHON configuration error: No inference endpoint configured.";
+    return "ARCHON configuration error: No inference endpoint configured. Env keys: " + JSON.stringify(Object.keys(env));
   }
 
   const conversation = messages
