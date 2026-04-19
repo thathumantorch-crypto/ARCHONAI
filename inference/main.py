@@ -19,7 +19,7 @@ app = Flask(__name__)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "archon_model.pt")
 DEVICE = torch.device("cpu")
-# Default to demo mode to avoid memory issues on free tier
+# Default to demo mode while model loads
 DEMO_MODE = os.environ.get("DEMO_MODE", "true").lower() == "true"
 
 DEMO_RESPONSES = [
