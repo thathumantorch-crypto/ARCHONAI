@@ -17,7 +17,7 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-MODEL_PATH = os.environ.get("MODEL_PATH", "/app/inference/archon_model.pt")
+MODEL_PATH = os.environ.get("MODEL_PATH", "archon_model.pt")
 DEVICE = torch.device("cpu")
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
@@ -166,11 +166,18 @@ def generate():
 def init_model():
     global model_runner
     model_path = Path(MODEL_PATH)
+    print(f"Looking for model at: {model_path.absolute()}")
+    print(f"Model path exists: {model_path.exists()}")
     if model_path.exists():
-        model_runner = ModelRunner(str(model_path))
+        try:
+            model_runner = ModelRunner(str(model_path))
+            print(f"Model loaded successfully!")
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            model_runner = None
     else:
         print(f"Warning: Model file not found at {model_path}")
-        print("Set MODEL_PATH environment variable")
+        print("Falling back to demo mode")
 
 
 if __name__ == "__main__":
